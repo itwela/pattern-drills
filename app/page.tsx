@@ -1,65 +1,250 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useConvexAuth } from "convex/react";
+import { useRouter } from "next/navigation";
+import { api } from "../convex/_generated/api";
+import { PATTERNS, CATEGORIES, Pattern, Language } from "../lib/patterns";
+import DrillPad from "../components/DrillPad";
 
 export default function Home() {
+  const [selected, setSelected] = useState<Pattern>(PATTERNS[0]);
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [language, setLanguage] = useState<Language>("javascript");
+
+  const { isAuthenticated } = useConvexAuth();
+  const { signOut } = useAuthActions();
+  const router = useRouter();
+  const currentUser = useQuery(api.drills.getCurrentUser);
+
+  const starredIds = useQuery(api.drills.getStarred) ?? [];
+  const toggleStarMutation = useMutation(api.drills.toggleStarred);
+  const starred = new Set(starredIds);
+
+  const toggleStar = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleStarMutation({ patternId: id });
+  };
+
+  const base = activeCategory === "All"
+    ? PATTERNS
+    : PATTERNS.filter((p) => p.category === activeCategory);
+
+  const filtered = [
+    ...base.filter((p) => starred.has(p.id)),
+    ...base.filter((p) => !starred.has(p.id)),
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "fixed", top: "-20vh", right: "-10vw", width: "60vw", height: "60vw", borderRadius: "50%", background: "radial-gradient(circle, rgba(144,208,96,0.07) 0%, transparent 70%)", filter: "blur(80px)", pointerEvents: "none" }} />
+      <div style={{ position: "fixed", bottom: "-20vh", left: "-10vw", width: "50vw", height: "50vw", borderRadius: "50%", background: "radial-gradient(circle, rgba(232,170,64,0.07) 0%, transparent 70%)", filter: "blur(80px)", pointerEvents: "none" }} />
+
+      {/* Header */}
+      <header style={{ padding: "18px 32px", borderBottom: "1px solid rgba(144,208,96,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(10,15,10,0.95)", backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ width: "28px", height: "28px", borderRadius: "8px", background: "rgba(232,170,64,0.2)", border: "1px solid rgba(232,170,64,0.45)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>
+            ⌨
+          </div>
+          <div>
+            <div style={{ fontSize: "15px", color: "#f0ead8", letterSpacing: "0.02em" }}>Pattern Drills</div>
+            <div style={{ fontSize: "10px", color: "rgba(240,234,216,0.5)", letterSpacing: "0.08em", textTransform: "uppercase" }}>type it until you don't have to think</div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {/* Language toggle */}
+          <div style={{ display: "flex", gap: "4px", background: "rgba(144,208,96,0.08)", border: "1px solid rgba(144,208,96,0.2)", borderRadius: "8px", padding: "4px" }}>
+            {(["javascript", "python"] as Language[]).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => setLanguage(lang)}
+                style={{
+                  padding: "5px 16px",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  letterSpacing: "0.06em",
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  border: "none",
+                  background: language === lang ? "rgba(232,170,64,0.25)" : "transparent",
+                  color: language === lang ? "#e8aa40" : "rgba(240,234,216,0.45)",
+                  fontWeight: language === lang ? 600 : 400,
+                }}
+              >
+                {lang === "javascript" ? "JS" : "PY"}
+              </button>
+            ))}
+          </div>
+
+          {/* Auth */}
+          {isAuthenticated ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {currentUser?.email && (
+                <span style={{ fontSize: "11px", color: "rgba(240,234,216,0.45)", letterSpacing: "0.03em" }}>
+                  {currentUser.email}
+                </span>
+              )}
+              <button
+                onClick={() => signOut()}
+                style={{
+                  padding: "5px 14px",
+                  borderRadius: "6px",
+                  fontSize: "11px",
+                  letterSpacing: "0.06em",
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                  border: "1px solid rgba(240,234,216,0.12)",
+                  background: "transparent",
+                  color: "rgba(240,234,216,0.4)",
+                }}
+              >
+                sign out
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => router.push("/sign-in")}
+              style={{
+                padding: "5px 14px",
+                borderRadius: "6px",
+                fontSize: "11px",
+                letterSpacing: "0.06em",
+                fontFamily: "inherit",
+                cursor: "pointer",
+                border: "1px solid rgba(144,208,96,0.3)",
+                background: "rgba(144,208,96,0.08)",
+                color: "rgba(240,234,216,0.6)",
+              }}
+            >
+              sign in
+            </button>
+          )}
         </div>
-      </main>
+      </header>
+
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+
+        {/* Sidebar */}
+        <aside style={{ width: "260px", borderRight: "1px solid rgba(144,208,96,0.12)", padding: "16px 0", display: "flex", flexDirection: "column", gap: "0", overflowY: "auto", flexShrink: 0, background: "rgba(10,15,10,0.7)" }}>
+          {/* Category filters */}
+          <div style={{ padding: "0 14px 12px", display: "flex", flexWrap: "wrap", gap: "4px" }}>
+            {["All", ...CATEGORIES].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "4px",
+                  fontSize: "10px",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                  border: activeCategory === cat ? "1px solid rgba(232,170,64,0.55)" : "1px solid rgba(240,234,216,0.12)",
+                  background: activeCategory === cat ? "rgba(232,170,64,0.15)" : "transparent",
+                  color: activeCategory === cat ? "#e8aa40" : "rgba(240,234,216,0.45)",
+                  transition: "all 0.15s",
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ height: "1px", background: "rgba(144,208,96,0.1)", margin: "0 14px 12px" }} />
+
+          {starred.size > 0 && (
+            <div style={{ padding: "0 14px 8px", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#e8aa40" }}>
+              Practicing
+            </div>
+          )}
+
+          {filtered.map((p, i) => {
+            const isActive = selected.id === p.id;
+            const isStarred = starred.has(p.id);
+            const prevIsStarred = i > 0 && starred.has(filtered[i - 1].id);
+            const showDivider = !isStarred && prevIsStarred && starred.size > 0;
+
+            return (
+              <div key={p.id}>
+                {showDivider && (
+                  <div style={{ height: "1px", background: "rgba(144,208,96,0.1)", margin: "8px 14px" }} />
+                )}
+                <button
+                  onClick={() => setSelected(p)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    textAlign: "left",
+                    background: isActive ? "rgba(144,208,96,0.1)" : "transparent",
+                    borderTop: "none",
+                    borderRight: "none",
+                    borderBottom: "none",
+                    borderLeft: isActive ? "2px solid #e8aa40" : "2px solid transparent",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    transition: "all 0.15s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "13px", color: isActive ? "#f0ead8" : "rgba(240,234,216,0.65)", letterSpacing: "0.01em", marginBottom: "2px" }}>
+                      {p.name}
+                    </div>
+                    <div style={{ fontSize: "10px", color: "rgba(240,234,216,0.35)", letterSpacing: "0.03em" }}>
+                      {p.description}
+                    </div>
+                  </div>
+
+                  <span
+                    onClick={(e) => toggleStar(p.id, e)}
+                    title={isStarred ? "Remove from practicing" : "Mark as practicing"}
+                    style={{
+                      fontSize: "14px",
+                      opacity: isStarred ? 1 : 0.2,
+                      color: isStarred ? "#e8aa40" : "#f0ead8",
+                      flexShrink: 0,
+                      transition: "opacity 0.15s",
+                      cursor: "pointer",
+                      lineHeight: 1,
+                    }}
+                    onMouseEnter={(e) => { if (!isStarred) (e.currentTarget as HTMLElement).style.opacity = "0.55"; }}
+                    onMouseLeave={(e) => { if (!isStarred) (e.currentTarget as HTMLElement).style.opacity = "0.2"; }}
+                  >
+                    ★
+                  </span>
+                </button>
+              </div>
+            );
+          })}
+        </aside>
+
+        {/* Main area */}
+        <main style={{ flex: 1, padding: "48px 52px", overflowY: "auto" }}>
+          <div style={{ marginBottom: "36px" }}>
+            <div style={{ fontSize: "10px", color: "#e8aa40", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "6px", display: "flex", alignItems: "center", gap: "8px" }}>
+              {selected.category} · {language === "javascript" ? "JavaScript" : "Python"}
+              {starred.has(selected.id) && (
+                <span style={{ color: "#e8aa40" }}>★ practicing</span>
+              )}
+            </div>
+            <h1 style={{ margin: 0, fontSize: "24px", color: "#f0ead8", fontWeight: 400, letterSpacing: "0.01em" }}>
+              {selected.name}
+            </h1>
+            <p style={{ margin: "6px 0 0", fontSize: "13px", color: "rgba(240,234,216,0.5)", letterSpacing: "0.02em" }}>
+              {selected.description}
+            </p>
+          </div>
+
+          <DrillPad pattern={selected} language={language} />
+        </main>
+      </div>
     </div>
   );
 }
