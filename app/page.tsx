@@ -257,12 +257,18 @@ export default function Home() {
 
               {filteredQuestions.map((q) => {
                 const isActive = selectedQuestion.id === q.id;
+                const isBlock = !!q.buildsToward;
+                const leadsToName = isBlock
+                  ? QUESTIONS.find((x) => x.id === q.buildsToward)?.title
+                  : null;
                 return (
                   <button
                     key={q.id}
                     onClick={() => setSelectedQuestion(q)}
                     style={{
-                      width: "100%", padding: "10px 14px", textAlign: "left",
+                      width: "100%",
+                      padding: isBlock ? "8px 14px 8px 22px" : "10px 14px",
+                      textAlign: "left",
                       background: isActive ? "rgba(144,208,96,0.1)" : "transparent",
                       borderTop: "none", borderRight: "none", borderBottom: "none",
                       borderLeft: isActive ? "2px solid #e8aa40" : "2px solid transparent",
@@ -275,15 +281,22 @@ export default function Home() {
                         width: "7px", height: "7px", borderRadius: "50%",
                         background: DIFF_DOT[q.difficulty],
                         marginTop: "5px", flexShrink: 0,
+                        opacity: isBlock ? 0.7 : 1,
                       }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "13px", color: isActive ? "#f0ead8" : "rgba(240,234,216,0.65)", letterSpacing: "0.01em", marginBottom: "2px" }}>
+                      <div style={{ fontSize: isBlock ? "12px" : "13px", color: isActive ? "#f0ead8" : isBlock ? "rgba(240,234,216,0.5)" : "rgba(240,234,216,0.65)", letterSpacing: "0.01em", marginBottom: "2px" }}>
                         {q.title}
                       </div>
-                      <div style={{ fontSize: "10px", color: "rgba(240,234,216,0.35)", letterSpacing: "0.03em" }}>
-                        {q.category}
-                      </div>
+                      {leadsToName ? (
+                        <div style={{ fontSize: "9px", color: "rgba(144,208,96,0.5)", letterSpacing: "0.04em" }}>
+                          builds toward: {leadsToName}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: "10px", color: "rgba(240,234,216,0.35)", letterSpacing: "0.03em" }}>
+                          {q.category}
+                        </div>
+                      )}
                     </div>
                   </button>
                 );
