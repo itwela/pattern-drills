@@ -22,6 +22,8 @@ export type Question = {
   testCases: TestCase[];
   functionName: string;
   starterCode: Record<Language, string>;
+  solution: Record<Language, string>;
+  solutionExplanation: string;
 };
 
 const sortArr = (r: unknown) => (Array.isArray(r) ? [...r].sort((a, b) => a - b) : r);
@@ -62,6 +64,11 @@ export const QUESTIONS: Question[] = [
       javascript: `function chargeOrder(chargers) {\n  // your code here\n}`,
       python: `def chargeOrder(chargers):\n    # your code here\n    pass`,
     },
+    solution: {
+      javascript: `function chargeOrder(chargers) {\n  return chargers\n    .map((val, idx) => ({ val, idx }))\n    .sort((a, b) => a.val - b.val)\n    .map(({ idx }) => idx);\n}`,
+      python: `def chargeOrder(chargers):\n    indexed = sorted(enumerate(chargers), key=lambda x: x[1])\n    return [i for i, v in indexed]`,
+    },
+    solutionExplanation: `The key insight: you need to sort by value but return the original indices, not the values themselves.\n\nStep 1 — pair each value with its index so you don't lose track of where it came from.\nStep 2 — sort those pairs by value (ascending).\nStep 3 — pull out just the indices in that sorted order.\n\nIn JS: .map() to pair, .sort() to order, .map() again to extract.\nIn Python: enumerate() gives you index+value pairs, sorted() with a key orders them, then a list comp extracts the indices.`,
   },
   {
     id: "two-sum",
@@ -96,6 +103,11 @@ export const QUESTIONS: Question[] = [
       javascript: `function twoSum(nums, target) {\n  // your code here\n}`,
       python: `def twoSum(nums, target):\n    # your code here\n    pass`,
     },
+    solution: {
+      javascript: `function twoSum(nums, target) {\n  const seen = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (seen.has(complement)) {\n      return [seen.get(complement), i];\n    }\n    seen.set(nums[i], i);\n  }\n}`,
+      python: `def twoSum(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        complement = target - n\n        if complement in seen:\n            return [seen[complement], i]\n        seen[n] = i`,
+    },
+    solutionExplanation: `The brute force is two nested loops (O(n²)) — check every pair. That works but is too slow for interviews.\n\nThe optimal approach uses a hash map (O(n)):\n\nAs you walk through the array, for each number ask: "have I already seen the number I need to pair with this?" That needed number is target - current.\n\nIf it's in the map, you found your pair — return both indices.\nIf not, store the current number and its index in the map for future lookups.\n\nYou only need one pass through the array. The map gives you O(1) lookups.`,
   },
   {
     id: "first-unique-char",
@@ -137,6 +149,11 @@ export const QUESTIONS: Question[] = [
       javascript: `function firstUniqueChar(s) {\n  // your code here\n}`,
       python: `def firstUniqueChar(s):\n    # your code here\n    pass`,
     },
+    solution: {
+      javascript: `function firstUniqueChar(s) {\n  const count = {};\n  for (const c of s) {\n    count[c] = (count[c] || 0) + 1;\n  }\n  for (let i = 0; i < s.length; i++) {\n    if (count[s[i]] === 1) return i;\n  }\n  return -1;\n}`,
+      python: `def firstUniqueChar(s):\n    from collections import Counter\n    count = Counter(s)\n    for i, c in enumerate(s):\n        if count[c] == 1:\n            return i\n    return -1`,
+    },
+    solutionExplanation: `Two passes, one hash map.\n\nPass 1 — count how many times each character appears. Store in an object/dict.\nPass 2 — walk the string again in order. The first character whose count is exactly 1 is your answer. Return its index.\n\nIf you finish pass 2 without finding one, return -1.\n\nThe order of pass 2 matters — it preserves the original left-to-right order so you always return the earliest unique character, not just any unique character.`,
   },
   {
     id: "valid-parentheses",
@@ -171,6 +188,11 @@ export const QUESTIONS: Question[] = [
       javascript: `function isValid(s) {\n  // your code here\n}`,
       python: `def isValid(s):\n    # your code here\n    pass`,
     },
+    solution: {
+      javascript: `function isValid(s) {\n  const stack = [];\n  const map = { ')': '(', ']': '[', '}': '{' };\n  for (const c of s) {\n    if ('([{'.includes(c)) {\n      stack.push(c);\n    } else {\n      if (stack.pop() !== map[c]) return false;\n    }\n  }\n  return stack.length === 0;\n}`,
+      python: `def isValid(s):\n    stack = []\n    mapping = {')': '(', ']': '[', '}': '{'}\n    for c in s:\n        if c in '([{':\n            stack.append(c)\n        elif not stack or stack.pop() != mapping[c]:\n            return False\n    return not stack`,
+    },
+    solutionExplanation: `Classic stack problem.\n\nThe rule: every closing bracket must match the most recently opened bracket. That "most recently opened" part is exactly what a stack gives you.\n\nWalk the string:\n— If it's an opening bracket ( [ { → push it onto the stack.\n— If it's a closing bracket ) ] } → pop the top of the stack and check if it matches. If it doesn't, return false immediately.\n\nAt the end, the stack should be empty. If there's anything left, some bracket was never closed.\n\nThe map object is just a lookup: closing bracket → what its matching opener should be.`,
   },
 ];
 

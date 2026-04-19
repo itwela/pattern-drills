@@ -208,6 +208,7 @@ export default function InterviewPad({
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [done, setDone] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset when question or language changes
@@ -218,6 +219,7 @@ export default function InterviewPad({
     setStartTime(null);
     setElapsed(0);
     setDone(false);
+    setShowSolution(false);
   }, [question.id, language]);
 
   // Timer
@@ -427,6 +429,91 @@ export default function InterviewPad({
           <span style={{ fontSize: "10px", color: "rgba(240,234,216,0.3)", marginLeft: "auto" }}>
             runs via Piston API
           </span>
+        )}
+      </div>
+
+      {/* Solution toggle */}
+      <div>
+        <button
+          onClick={() => setShowSolution((s) => !s)}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            fontSize: "11px",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: showSolution ? "#e8aa40" : "rgba(240,234,216,0.35)",
+            padding: 0,
+            transition: "color 0.15s",
+          }}
+        >
+          {showSolution ? "▼ hide solution" : "▶ show solution"}
+        </button>
+
+        {showSolution && (
+          <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "14px" }}>
+            {/* Solution code */}
+            <div
+              style={{
+                background: "#111811",
+                border: "1px solid rgba(232,170,64,0.2)",
+                borderRadius: "10px",
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ display: "flex", gap: "6px", padding: "12px 16px 10px", borderBottom: "1px solid rgba(232,170,64,0.08)", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {["#ff5a45", "#e8aa40", "#6fd44a"].map((c, i) => (
+                    <div key={i} style={{ width: "10px", height: "10px", borderRadius: "50%", background: c, opacity: 0.7 }} />
+                  ))}
+                </div>
+                <span style={{ fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#e8aa40" }}>
+                  solution · {language === "javascript" ? "JavaScript" : "Python"}
+                </span>
+              </div>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: "20px 24px",
+                  fontFamily: "monospace",
+                  fontSize: "14px",
+                  lineHeight: "1.7",
+                  color: "rgba(240,234,216,0.85)",
+                  overflowX: "auto",
+                  whiteSpace: "pre",
+                }}
+              >
+                {question.solution[language]}
+              </pre>
+            </div>
+
+            {/* Explanation */}
+            <div
+              style={{
+                background: "#0d130d",
+                border: "1px solid rgba(144,208,96,0.12)",
+                borderRadius: "10px",
+                padding: "18px 22px",
+              }}
+            >
+              <div style={{ fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#90d060", marginBottom: "12px" }}>
+                How it works
+              </div>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "13px",
+                  color: "rgba(240,234,216,0.7)",
+                  lineHeight: "1.8",
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {question.solutionExplanation}
+              </p>
+            </div>
+          </div>
         )}
       </div>
 
